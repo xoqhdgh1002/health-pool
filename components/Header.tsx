@@ -27,16 +27,16 @@ export default function Header() {
               펀딩 딜
             </Link>
             <Link
+              href="/community"
+              className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-semibold"
+            >
+              커뮤니티
+            </Link>
+            <Link
               href="/about"
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
             >
               소개
-            </Link>
-            <Link
-              href="/contact"
-              className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
-            >
-              문의
             </Link>
             <Link
               href="/login"

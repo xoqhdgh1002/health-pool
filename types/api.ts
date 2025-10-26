@@ -317,3 +317,26 @@ export interface DeletePostResponse {
   success: boolean;
   message: string;
 }
+
+// ============================================
+// Comment API Types
+// ============================================
+
+// POST /api/posts/[postId]/comments
+export interface CreateCommentRequest {
+  content: string;
+  userId: string;
+}
+
+export interface CreateCommentResponse {
+  success: boolean;
+  message: string;
+  data: Comment;
+}
+
+// GET /api/posts/[postId]/comments
+export interface GetCommentsResponse {
+  success: boolean;
+  data: Comment[];
+  count: number;
+}
