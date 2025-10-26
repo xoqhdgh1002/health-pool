@@ -223,3 +223,97 @@ export interface GetFundingDealDetailResponse {
   };
 }
 
+// ============================================
+// Post (Community) API Types
+// ============================================
+
+export interface Author {
+  id: string;
+  name: string;
+  email: string;
+  profileImage: string | null;
+  createdAt?: string;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  authorId: string;
+  postId: string;
+  author: Author;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Post {
+  id: string;
+  title: string;
+  content: string;
+  views: number;
+  imageUrl: string | null;
+  authorId: string;
+  author: Author;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    comments: number;
+  };
+}
+
+export interface PostWithComments extends Post {
+  comments: Comment[];
+}
+
+// POST /api/posts
+export interface CreatePostRequest {
+  title: string;
+  content: string;
+  userId: string;
+  imageUrl?: string;
+}
+
+export interface CreatePostResponse {
+  success: boolean;
+  message: string;
+  data: Post;
+}
+
+// GET /api/posts
+export interface GetPostsResponse {
+  success: boolean;
+  data: Post[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// GET /api/posts/[postId]
+export interface GetPostDetailResponse {
+  success: boolean;
+  data: PostWithComments;
+}
+
+// PUT /api/posts/[postId]
+export interface UpdatePostRequest {
+  title?: string;
+  content?: string;
+  userId: string;
+  imageUrl?: string;
+}
+
+export interface UpdatePostResponse {
+  success: boolean;
+  message: string;
+  data: Post;
+}
+
+// DELETE /api/posts/[postId]
+export interface DeletePostResponse {
+  success: boolean;
+  message: string;
+}
