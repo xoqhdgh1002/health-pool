@@ -168,3 +168,58 @@ export interface CheckSubscriptionResponse {
   } | null;
 }
 
+// ============================================
+// Funding Deal Detail API Types
+// ============================================
+
+export interface FundingDealDetailMetadata extends FundingDealMetadata {
+  hoursRemaining: number; // 남은 시간 (시)
+  savingsAmount: number; // 절약 금액
+}
+
+export interface GetFundingDealDetailResponse {
+  success: boolean;
+  data: {
+    id: string;
+    seasonName: string;
+    targetCount: number;
+    currentCount: number;
+    discountedPrice: number;
+    deadline: string;
+    status: string;
+    description: string | null;
+    menuItem: {
+      id: string;
+      name: string;
+      description: string | null;
+      price: number;
+      imageUrl: string | null;
+      isAvailable: boolean;
+      restaurant: {
+        id: string;
+        name: string;
+        address: string;
+        phoneNumber: string | null;
+        imageUrl: string | null;
+        description: string | null;
+      };
+    };
+    subscriptions: Array<{
+      id: string;
+      userId: string;
+      quantity: number;
+      createdAt: string;
+      user: {
+        id: string;
+        name: string;
+      };
+    }>;
+    _count: {
+      subscriptions: number;
+    };
+    metadata: FundingDealDetailMetadata;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
