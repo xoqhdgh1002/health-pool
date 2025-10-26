@@ -137,20 +137,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/deals - 모든 펀딩 딜 조회 (옵션)
+// GET /api/deals - 펀딩 딜 목록 조회
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const restaurantId = searchParams.get('restaurantId');
+    const available = searchParams.get('available'); // 'true'면 참여 가능한 딜만
 
     // 필터 조건 구성
     const where: any = {};
 
-    if (status) {
+    // available=true인 경우: 현재 참여 가능한 딜만 조회
+    // (ACTIVE 상태 + 마감 기한이 지나지 않음)
+    if (available === 'true') {
+      where.status = 'ACTIVE';
+      where.deadline = {
+        gte: new Date(), // 마감 기한이 현재 시간보다 미래
+      };
+    } else if (status) {
+      // available이 아닌 경우 status 파라미터 사용
       where.status = status;
     }
 
+    // 특정 가게의 딜만 조회
     if (restaurantId) {
       where.menuItem = {
         restaurant: {
@@ -169,6 +179,9 @@ export async function GET(request: NextRequest) {
                 id: true,
                 name: true,
                 address: true,
+                phoneNumber: true,
+                imageUrl: true,
+                description: true,
               },
             },
           },
@@ -179,15 +192,39 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [
+        { deadline: 'asc' }, // 마감 임박한 순
+        { createdAt: 'desc' }, // 최신순
+      ],
+    });
+
+    // 각 딜에 추가 정보 계산
+    const dealsWithMetadata = fundingDeals.map((deal) => {
+      const participationRate = (deal.currentCount / deal.targetCount) * 100;
+      const remainingCount = deal.targetCount - deal.currentCount;
+      const discountRate = deal.menuItem.price > 0
+        ? Math.round(((deal.menuItem.price - deal.discountedPrice) / deal.menuItem.price) * 100)
+        : 0;
+      const timeRemaining = deal.deadline.getTime() - new Date().getTime();
+      const daysRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60 * 24));
+
+      return {
+        ...deal,
+        metadata: {
+          participationRate: Math.round(participationRate * 10) / 10, // 소수점 1자리
+          remainingCount,
+          discountRate,
+          daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+          isAlmostFull: participationRate >= 80,
+          isExpiringSoon: daysRemaining <= 3 && daysRemaining > 0,
+        },
+      };
     });
 
     return NextResponse.json({
       success: true,
-      data: fundingDeals,
-      count: fundingDeals.length,
+      data: dealsWithMetadata,
+      count: dealsWithMetadata.length,
     });
   } catch (error) {
     console.error('Error fetching funding deals:', error);

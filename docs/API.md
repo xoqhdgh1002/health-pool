@@ -154,17 +154,38 @@ const data = await response.json();
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `available` | string | No | 'true'일 때 참여 가능한 딜만 조회 (ACTIVE 상태 + 마감 전) |
 | `status` | string | No | 상태 필터 (ACTIVE, SUCCESS, FAILED, CLOSED) |
 | `restaurantId` | string | No | 특정 가게의 딜만 조회 |
 
 **Example Request:**
 
 ```bash
+# 현재 참여 가능한 모든 딜 조회 (추천)
+curl http://localhost:3000/api/deals?available=true
+
 # 모든 활성 딜 조회
 curl http://localhost:3000/api/deals?status=ACTIVE
 
 # 특정 가게의 딜 조회
 curl http://localhost:3000/api/deals?restaurantId=clx9999999999
+
+# 특정 가게의 참여 가능한 딜만 조회
+curl http://localhost:3000/api/deals?available=true&restaurantId=clx9999999999
+```
+
+```javascript
+// JavaScript/TypeScript 예시
+// 참여 가능한 모든 딜 조회
+const response = await fetch('/api/deals?available=true');
+const data = await response.json();
+
+console.log(`총 ${data.count}개의 딜을 찾았습니다.`);
+data.data.forEach(deal => {
+  console.log(`${deal.menuItem.restaurant.name} - ${deal.menuItem.name}`);
+  console.log(`할인율: ${deal.metadata.discountRate}%`);
+  console.log(`마감: ${deal.metadata.daysRemaining}일 남음`);
+});
 ```
 
 #### 응답
@@ -187,21 +208,52 @@ curl http://localhost:3000/api/deals?restaurantId=clx9999999999
       "menuItem": {
         "id": "clx1234567890",
         "name": "김치찌개",
+        "description": "맛있는 김치찌개",
         "price": 12000,
+        "imageUrl": "https://example.com/image.jpg",
+        "isAvailable": true,
         "restaurant": {
           "id": "clx9999999999",
           "name": "맛있는 식당",
-          "address": "서울특별시 강남구 테헤란로 123"
+          "address": "서울특별시 강남구 테헤란로 123",
+          "phoneNumber": "02-1234-5678",
+          "imageUrl": "https://example.com/restaurant.jpg",
+          "description": "건강한 한식 전문점"
         }
       },
       "_count": {
         "subscriptions": 15
-      }
+      },
+      "metadata": {
+        "participationRate": 30.0,
+        "remainingCount": 35,
+        "discountRate": 33,
+        "daysRemaining": 45,
+        "isAlmostFull": false,
+        "isExpiringSoon": false
+      },
+      "createdAt": "2025-10-26T12:00:00.000Z",
+      "updatedAt": "2025-10-26T12:00:00.000Z"
     }
   ],
   "count": 1
 }
 ```
+
+**Response 필드 설명:**
+
+| Field | Description |
+|-------|-------------|
+| `metadata.participationRate` | 참여율 (0-100, 소수점 1자리) |
+| `metadata.remainingCount` | 남은 참여 인원 수 |
+| `metadata.discountRate` | 할인율 (원가 대비 %) |
+| `metadata.daysRemaining` | 마감까지 남은 일수 |
+| `metadata.isAlmostFull` | 거의 마감 여부 (80% 이상) |
+| `metadata.isExpiringSoon` | 곧 만료 여부 (3일 이하) |
+
+**정렬 순서:**
+1. 마감 기한 임박한 순 (deadline ASC)
+2. 최신 생성 순 (createdAt DESC)
 
 ---
 

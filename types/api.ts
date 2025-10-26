@@ -44,6 +44,15 @@ export interface CreateFundingDealResponse {
   };
 }
 
+export interface FundingDealMetadata {
+  participationRate: number; // 참여율 (0-100)
+  remainingCount: number; // 남은 인원
+  discountRate: number; // 할인율 (%)
+  daysRemaining: number; // 남은 일수
+  isAlmostFull: boolean; // 거의 마감 (80% 이상)
+  isExpiringSoon: boolean; // 곧 만료 (3일 이하)
+}
+
 export interface GetFundingDealsResponse {
   success: boolean;
   data: Array<{
@@ -58,16 +67,25 @@ export interface GetFundingDealsResponse {
     menuItem: {
       id: string;
       name: string;
+      description: string | null;
       price: number;
+      imageUrl: string | null;
+      isAvailable: boolean;
       restaurant: {
         id: string;
         name: string;
         address: string;
+        phoneNumber: string | null;
+        imageUrl: string | null;
+        description: string | null;
       };
     };
     _count: {
       subscriptions: number;
     };
+    metadata: FundingDealMetadata;
+    createdAt: string;
+    updatedAt: string;
   }>;
   count: number;
 }
