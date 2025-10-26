@@ -21,16 +21,16 @@ export default function Header() {
               홈
             </Link>
             <Link
+              href="/deals"
+              className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-semibold"
+            >
+              펀딩 딜
+            </Link>
+            <Link
               href="/about"
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
             >
               소개
-            </Link>
-            <Link
-              href="/services"
-              className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
-            >
-              서비스
             </Link>
             <Link
               href="/contact"
