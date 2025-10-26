@@ -9,3 +9,198 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ============================================
+// 사용자 모델
+// ============================================
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  name          String
+  points        Int            @default(0)
+  role          UserRole       @default(USER)
+  profileImage  String?
+  phoneNumber   String?
+
+  // 관계
+  restaurants   Restaurant[]   // 사장님이 소유한 가게들 (1:N)
+  subscriptions Subscription[] // 참여한 펀딩 내역 (1:N)
+  posts         Post[]         // 작성한 게시글 (1:N)
+  comments      Comment[]      // 작성한 댓글 (1:N)
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([email])
+  @@map("users")
+}
+
+enum UserRole {
+  USER      // 일반 사용자
+  OWNER     // 가게 사장님
+  ADMIN     // 관리자
+}
+
+// ============================================
+// 가게 모델
+// ============================================
+model Restaurant {
+  id          String     @id @default(cuid())
+  name        String
+  address     String
+  description String?    @db.Text
+  phoneNumber String?
+  imageUrl    String?
+
+  // 사장님 정보 (User와 1:N 관계)
+  ownerId     String
+  owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // 관계
+  menuItems   MenuItem[] // 가게의 메뉴 아이템들 (1:N)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([ownerId])
+  @@index([name])
+  @@map("restaurants")
+}
+
+// ============================================
+// 메뉴 아이템 모델
+// ============================================
+model MenuItem {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?       @db.Text
+  price        Int           // 원래 가격 (원 단위)
+  imageUrl     String?
+  isAvailable  Boolean       @default(true)
+
+  // 가게 정보 (Restaurant와 1:N 관계)
+  restaurantId String
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  // 관계
+  fundingDeals FundingDeal[] // 이 메뉴의 펀딩 딜들 (1:N)
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([restaurantId])
+  @@map("menu_items")
+}
+
+// ============================================
+// 펀딩 딜 모델 (핵심 기능)
+// ============================================
+model FundingDeal {
+  id              String             @id @default(cuid())
+  seasonName      String             // 예: "2025 겨울 시즌", "1월 특별 딜"
+  targetCount     Int                // 목표 인원
+  currentCount    Int                @default(0) // 현재 참여 인원
+  discountedPrice Int                // 할인된 가격 (원 단위)
+  deadline        DateTime           // 마감 기한
+  status          FundingDealStatus  @default(ACTIVE)
+  description     String?            @db.Text
+
+  // 메뉴 아이템 정보 (MenuItem과 1:N 관계)
+  menuItemId      String
+  menuItem        MenuItem           @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  // 관계
+  subscriptions   Subscription[]     // 참여한 사용자들 (1:N)
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([menuItemId])
+  @@index([status])
+  @@index([deadline])
+  @@map("funding_deals")
+}
+
+enum FundingDealStatus {
+  ACTIVE    // 모집 중
+  SUCCESS   // 성공 (목표 달성)
+  FAILED    // 실패 (기한 만료)
+  CLOSED    // 종료
+}
+
+// ============================================
+// 펀딩 참여 내역 (User와 FundingDeal을 연결하는 중간 테이블)
+// ============================================
+model Subscription {
+  id            String      @id @default(cuid())
+  quantity      Int         @default(1) // 참여 수량
+  paidAmount    Int         // 지불한 금액
+  isUsed        Boolean     @default(false) // 쿠폰 사용 여부
+  usedAt        DateTime?   // 쿠폰 사용 일시
+
+  // User와의 관계 (N:1)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // FundingDeal과의 관계 (N:1)
+  fundingDealId String
+  fundingDeal   FundingDeal @relation(fields: [fundingDealId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, fundingDealId]) // 한 사용자는 같은 펀딩에 한 번만 참여 가능
+  @@index([userId])
+  @@index([fundingDealId])
+  @@map("subscriptions")
+}
+
+// ============================================
+// 커뮤니티 게시글 모델
+// ============================================
+model Post {
+  id          String    @id @default(cuid())
+  title       String
+  content     String    @db.Text
+  views       Int       @default(0)
+  imageUrl    String?
+
+  // 작성자 정보 (User와 1:N 관계)
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // 관계
+  comments    Comment[] // 게시글의 댓글들 (1:N)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+// ============================================
+// 댓글 모델
+// ============================================
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+
+  // 작성자 정보 (User와 1:N 관계)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // 게시글 정보 (Post와 1:N 관계)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([postId])
+  @@index([createdAt])
+  @@map("comments")
+}
