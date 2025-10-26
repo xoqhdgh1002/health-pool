@@ -95,3 +95,76 @@ export interface ApiErrorResponse {
   message?: string;
   required?: string[];
 }
+
+// ============================================
+// Subscription API Types
+// ============================================
+
+export interface SubscribeFundingDealRequest {
+  userId: string; // 임시: 실제로는 세션에서 가져옴
+  quantity?: number; // 참여 수량 (기본값: 1)
+}
+
+export interface SubscribeFundingDealResponse {
+  success: boolean;
+  message: string;
+  data: {
+    subscription: {
+      id: string;
+      userId: string;
+      fundingDealId: string;
+      quantity: number;
+      paidAmount: number;
+      isUsed: boolean;
+      usedAt: string | null;
+      createdAt: string;
+      updatedAt: string;
+    };
+    deal: {
+      id: string;
+      seasonName: string;
+      targetCount: number;
+      currentCount: number;
+      discountedPrice: number;
+      deadline: string;
+      status: string;
+      description: string | null;
+      menuItem: {
+        id: string;
+        name: string;
+        description: string | null;
+        price: number;
+        imageUrl: string | null;
+        restaurant: {
+          id: string;
+          name: string;
+          address: string;
+        };
+      };
+    };
+    isGoalReached: boolean; // 목표 달성 여부
+  };
+}
+
+export interface CheckSubscriptionResponse {
+  success: boolean;
+  isSubscribed: boolean;
+  subscription: {
+    id: string;
+    userId: string;
+    fundingDealId: string;
+    quantity: number;
+    paidAmount: number;
+    isUsed: boolean;
+    usedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+    fundingDeal: {
+      id: string;
+      seasonName: string;
+      status: string;
+      deadline: string;
+    };
+  } | null;
+}
+
